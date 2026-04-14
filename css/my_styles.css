@@ -1,0 +1,59 @@
+.bg-primary{
+    background-color: rgb(150, 149, 212) !important;
+}
+.text-primary{
+    color:rgb(159, 159, 216) !important;
+
+}
+
+.back-link {
+    position: fixed;
+    top: 15px;
+    left: 20px;
+    color: white;
+    background: rgba(0,0,0,0.4);
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 13px;
+    text-decoration: none;
+    z-index: 9999;
+}
+
+.back-link:hover {
+    color:#c2b4e2 !important;
+}
+
+.subheading a[href^="mailto:"] {
+    color: rgb(134, 130, 241) !important;
+}
+.subheading a[href^="mailto:"]:hover {
+    color: #c2b4e2 !important;
+}
+
+.social-icons a.social-icon,
+.social-icons a.social-icon:visited {
+    color: rgb(255, 255, 255) !important;
+    transition: transform 0.2s ease, color 0.2s ease;
+}
+
+.social-icons a.social-icon:hover,
+.social-icons a.social-icon:focus,
+.social-icons a.social-icon:active {
+    color: #bda0e3 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    outline: none !important;
+}
+
+.dev-icons .list-inline-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-right: 20px;
+    font-size: 30px;
+    color: #cbb2dc;
+}
+
+.dev-icons i {
+    font-size: 30px;
+}

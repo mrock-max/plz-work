@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AutoForge — AI Car Customizer</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --bg:#0d0d0f;--surface:#131316;--surface2:#1a1a1f;--surface3:#212127;
+    --border:#2a2a32;--border2:#363642;
+    --text:#f0eff4;--muted:#888898;--hint:#555562;
+    --accent:#e8ff47;--accent2:#ff6b35;--accent3:#5e9bff;
+    --red:#ff4444;--green:#44ff88;
+    --radius:10px;--radius-lg:16px;
+  }
+  body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+
+  header{display:flex;align-items:center;justify-content:space-between;padding:18px 28px;border-bottom:1px solid var(--border);background:var(--surface)}
+  .logo{font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:3px;color:var(--accent)}
+  .logo span{color:var(--accent2)}
+  .badge{font-family:'DM Mono',monospace;font-size:10px;background:var(--accent);color:#000;padding:3px 8px;border-radius:4px;font-weight:500;letter-spacing:1px}
+
+  .shell{display:grid;grid-template-columns:340px 1fr;min-height:calc(100vh - 61px)}
+
+  aside{background:var(--surface);border-right:1px solid var(--border);padding:24px;display:flex;flex-direction:column;gap:24px;overflow-y:auto;max-height:calc(100vh - 61px)}
+  .section-label{font-family:'DM Mono',monospace;font-size:10px;color:var(--hint);letter-spacing:2px;text-transform:uppercase;margin-bottom:10px}
+  
+  input[type=text],textarea,select{width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:10px 14px;border-radius:var(--radius);font-family:'DM Sans',sans-serif;font-size:14px;outline:none;transition:border-color .2s}
+  input[type=text]:focus,textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(232,255,71,.08)}
+  textarea{resize:none;min-height:90px;line-height:1.5}
+  ::placeholder{color:var(--hint)}
+
+  .mod-tags{display:flex;flex-wrap:wrap;gap:6px;min-height:30px}
+  .tag{display:inline-flex;align-items:center;gap:6px;background:var(--surface3);border:1px solid var(--border2);border-radius:20px;padding:4px 10px 4px 12px;font-size:12px;color:var(--text)}
+  .tag .rm{cursor:pointer;color:var(--muted);font-size:14px;line-height:1;transition:color .15s}
+  .tag .rm:hover{color:var(--red)}
+  .tag-add{display:flex;gap:8px;align-items:center}
+  .tag-add input{flex:1}
+  .icon-btn{background:var(--surface2);border:1px solid var(--border);color:var(--muted);border-radius:var(--radius);width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;transition:all .15s;flex-shrink:0}
+  .icon-btn:hover{border-color:var(--accent);color:var(--accent)}
+
+  .upload-zone{border:1.5px dashed var(--border2);border-radius:var(--radius-lg);padding:20px;text-align:center;cursor:pointer;transition:all .2s;position:relative;overflow:hidden}
+  .upload-zone:hover{border-color:var(--accent3);background:rgba(94,155,255,.04)}
+  .upload-zone.dragover{border-color:var(--accent);background:rgba(232,255,71,.04)}
+  .upload-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+  .upload-icon{font-size:28px;margin-bottom:8px}
+  .upload-text{font-size:12px;color:var(--muted)}
+  .upload-text strong{color:var(--text);display:block;font-size:13px;margin-bottom:3px}
+  .preview-thumb{width:100%;height:100px;object-fit:cover;border-radius:8px;margin-top:8px;display:none}
+
+  .swatches{display:flex;gap:8px;flex-wrap:wrap}
+  .swatch{width:32px;height:32px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:all .15s;position:relative}
+  .swatch.active{border-color:var(--accent);transform:scale(1.15)}
+  .swatch::after{content:'';position:absolute;inset:-4px;border-radius:50%;border:2px solid transparent;transition:border-color .15s}
+  .swatch:hover::after{border-color:var(--border2)}
+  .swatch-custom{width:32px;height:32px;border-radius:50%;cursor:pointer;border:1px dashed var(--border2);display:flex;align-items:center;justify-content:center;font-size:14px;color:var(--muted);position:relative;transition:all .15s}
+  .swatch-custom input[type=color]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;border-radius:50%}
+  .swatch-custom:hover{border-color:var(--accent3);color:var(--accent3)}
+
+  .style-chips{display:flex;gap:6px;flex-wrap:wrap}
+  .chip{padding:6px 14px;border-radius:20px;font-size:12px;border:1px solid var(--border);color:var(--muted);cursor:pointer;transition:all .15s;background:var(--surface2)}
+  .chip.active{background:var(--accent);color:#000;border-color:var(--accent);font-weight:500}
+  .chip:hover:not(.active){border-color:var(--border2);color:var(--text)}
+
+  .gen-btn{width:100%;padding:14px;border-radius:var(--radius-lg);border:none;cursor:pointer;font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:3px;transition:all .2s;position:relative;overflow:hidden}
+  .gen-btn.primary{background:var(--accent);color:#000}
+  .gen-btn.primary:hover{background:#f5ff6e;transform:translateY(-1px)}
+  .gen-btn.primary:active{transform:translateY(0)}
+  .gen-btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
+  .gen-btn.loading{background:var(--surface3);color:var(--muted)}
+  .spin{display:inline-block;animation:spin 1s linear infinite;margin-right:6px}
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  main{background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:32px;gap:24px;overflow-y:auto;max-height:calc(100vh - 61px)}
+  .canvas-area{width:100%;max-width:800px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;position:relative}
+  
+  .render-placeholder{display:flex;flex-direction:column;align-items:center;justify-content:center;height:460px;gap:16px;text-align:center;padding:40px}
+  .placeholder-icon{font-size:64px;opacity:.15}
+  .placeholder-title{font-family:'Bebas Neue',sans-serif;font-size:32px;letter-spacing:2px;color:var(--muted)}
+  .placeholder-sub{font-size:13px;color:var(--hint);max-width:300px;line-height:1.6}
+  
+  .render-output{display:none;width:100%;position:relative}
+  .render-output img{width:100%;display:block;max-height:500px;object-fit:contain;background:#0a0a0c}
+  
+  .render-desc-area{padding:20px 24px;border-top:1px solid var(--border)}
+  .render-desc-title{font-family:'DM Mono',monospace;font-size:10px;color:var(--hint);letter-spacing:2px;text-transform:uppercase;margin-bottom:8px}
+  .render-desc-text{font-size:13px;color:var(--muted);line-height:1.7}
+
+  .spec-bar{width:100%;max-width:800px;display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+  .spec-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px}
+  .spec-name{font-family:'DM Mono',monospace;font-size:9px;color:var(--hint);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:5px}
+  .spec-val{font-size:15px;font-weight:500;color:var(--text)}
+  .spec-val.accent{color:var(--accent)}
+
+  .history-row{width:100%;max-width:800px}
+  .history-row h3{font-family:'DM Mono',monospace;font-size:10px;color:var(--hint);letter-spacing:2px;text-transform:uppercase;margin-bottom:12px}
+  .history-thumbs{display:flex;gap:10px;overflow-x:auto;padding-bottom:4px}
+  .hist-thumb{width:100px;height:65px;border-radius:8px;border:1px solid var(--border);overflow:hidden;cursor:pointer;flex-shrink:0;transition:all .15s;position:relative}
+  .hist-thumb:hover{border-color:var(--border2)}
+  .hist-thumb img{width:100%;height:100%;object-fit:cover}
+  .hist-thumb.active-hist{border-color:var(--accent)}
+  .hist-thumb .hist-num{position:absolute;bottom:4px;right:6px;font-family:'DM Mono',monospace;font-size:9px;color:rgba(255,255,255,.5);background:rgba(0,0,0,.5);padding:1px 4px;border-radius:3px}
+
+  .loader-overlay{position:absolute;inset:0;background:rgba(13,13,15,.85);display:none;align-items:center;justify-content:center;flex-direction:column;gap:12px;z-index:10;backdrop-filter:blur(4px)}
+  .loader-overlay.show{display:flex}
+  .loader-bar{width:240px;height:2px;background:var(--surface3);border-radius:2px;overflow:hidden}
+  .loader-fill{height:100%;background:var(--accent);width:0%;transition:width .3s;border-radius:2px}
+  .loader-text{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:1px}
+
+  .error-toast{display:none;background:rgba(255,68,68,.1);border:1px solid var(--red);border-radius:var(--radius);padding:10px 14px;font-size:12px;color:var(--red);margin-top:-8px}
+  .error-toast.show{display:block}
+
+  .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.7);display:none;align-items:center;justify-content:center;z-index:100;backdrop-filter:blur(6px)}
+  .modal-bg.show{display:flex}
+  .modal{background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius-lg);padding:32px;width:420px;max-width:90vw}
+  .modal h2{font-family:'Bebas Neue',sans-serif;font-size:26px;letter-spacing:2px;margin-bottom:6px}
+  .modal p{font-size:13px;color:var(--muted);margin-bottom:20px;line-height:1.6}
+  .modal input{margin-bottom:12px}
+  .modal .note{font-size:11px;color:var(--hint);margin-top:8px}
+  .modal .note a{color:var(--accent3)}
+
+  ::-webkit-scrollbar{width:6px;height:6px}
+  ::-webkit-scrollbar-track{background:transparent}
+  ::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+
+  @media(max-width:800px){
+    .shell{grid-template-columns:1fr;grid-template-rows:auto 1fr}
+    aside{max-height:none;overflow:visible}
+    main{max-height:none}
+    .spec-bar{grid-template-columns:repeat(2,1fr)}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">Auto<span>Forge</span></div>
+  <div style="display:flex;align-items:center;gap:12px">
+    <span class="badge">AI STUDIO</span>
+    <button class="icon-btn" id="apiKeyBtn" title="API Settings" style="font-size:14px">⚙</button>
+  </div>
+</header>
+
+<a href="../from scratch/from_scratch.html" style="text-decoration:none;">
+  <button class="icon-btn" title="Return to From Scratch Page" style="font-size:12px">
+    ⬅ Back
+  </button>
+</a>
+
+<div class="shell">
+  <aside>
+    <div>
+      <div class="section-label">Vehicle</div>
+      <input type="text" id="vinInput" placeholder="VIN or make/model/year  e.g. 2020 Ford Mustang GT" style="margin-bottom:8px">
+      <div class="error-toast" id="vinError">Please enter a vehicle make/model or VIN number.</div>
+    </div>
+
+    <div>
+      <div class="section-label">Paint Color</div>
+      <div class="swatches" id="swatches">
+        <div class="swatch active" data-color="Midnight Black" style="background:#0d0d0d"></div>
+        <div class="swatch" data-color="Pearl White" style="background:#f0eeea"></div>
+        <div class="swatch" data-color="Racing Red" style="background:#c0281e"></div>
+        <div class="swatch" data-color="Electric Blue" style="background:#1a5fa8"></div>
+        <div class="swatch" data-color="Titanium Silver" style="background:#9ba3ab"></div>
+        <div class="swatch" data-color="Forest Green" style="background:#2d6a4f"></div>
+        <div class="swatch" data-color="Burnt Orange" style="background:#c45c20"></div>
+        <div class="swatch" data-color="Gunmetal Gray" style="background:#4a4d52"></div>
+        <div class="swatch-custom" title="Custom color">
+          <input type="color" id="customColor" value="#8B5CF6">
+          <span style="pointer-events:none">+</span>
+        </div>
+      </div>
+      <div id="colorLabel" style="font-size:11px;color:var(--hint);margin-top:8px;font-family:'DM Mono',monospace">Midnight Black</div>
+    </div>
+
+    <div>
+      <div class="section-label">Build Style</div>
+      <div class="style-chips" id="styleChips">
+        <div class="chip active" data-style="Stock">Stock</div>
+        <div class="chip" data-style="Street">Street</div>
+        <div class="chip" data-style="Track">Track</div>
+        <div class="chip" data-style="Stance">Stance</div>
+        <div class="chip" data-style="Off-Road">Off-Road</div>
+        <div class="chip" data-style="Luxury">Luxury</div>
+        <div class="chip" data-style="Widebody">Widebody</div>
+        <div class="chip" data-style="Rat Rod">Rat Rod</div>
+      </div>
+    </div>
+
+    <div>
+      <div class="section-label">Describe Modifications</div>
+      <textarea id="modDesc" placeholder="e.g. wide body kit, carbon fiber hood, blacked out taillights, 22 inch chrome wheels, lowered suspension, custom exhaust tips..."></textarea>
+    </div>
+
+    <div>
+      <div class="section-label">Quick Mod Tags</div>
+      <div id="presetTagsRow" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px"></div>
+      <div class="mod-tags" id="modTags"></div>
+      <div class="tag-add" style="margin-top:8px">
+        <input type="text" id="tagInput" placeholder="Add a mod tag..." style="font-size:13px;padding:8px 12px">
+        <div class="icon-btn" id="addTagBtn">+</div>
+      </div>
+    </div>
+
+    <div>
+      <div class="section-label">Reference Image (optional)</div>
+      <div class="upload-zone" id="uploadZone">
+        <input type="file" id="fileInput" accept="image/*">
+        <div class="upload-icon">📸</div>
+        <div class="upload-text"><strong>Drop or click to upload</strong>Inspiration photo, wheels, body kit reference</div>
+        <img class="preview-thumb" id="previewThumb" alt="preview">
+      </div>
+    </div>
+
+    <div>
+      <div class="section-label">Render Angle</div>
+      <div class="style-chips" id="angleChips">
+        <div class="chip active" data-angle="front 3/4">Front ¾</div>
+        <div class="chip" data-angle="side profile">Side</div>
+        <div class="chip" data-angle="rear 3/4">Rear ¾</div>
+        <div class="chip" data-angle="overhead">Top</div>
+        <div class="chip" data-angle="close-up front">Front</div>
+        <div class="chip" data-angle="interior cockpit">Interior</div>
+      </div>
+    </div>
+
+    <button class="gen-btn primary" id="genBtn">GENERATE RENDER</button>
+  </aside>
+
+  <main>
+    <div class="canvas-area" id="canvasArea">
+      <div class="render-placeholder" id="renderPlaceholder">
+        <div class="placeholder-icon">🚗</div>
+        <div class="placeholder-title">Your Build Awaits</div>
+        <div class="placeholder-sub">Enter a vehicle, choose your mods and style, then hit Generate to see your custom render.</div>
+      </div>
+      <div class="render-output" id="renderOutput">
+        <img id="renderImg" alt="AI Car Render">
+        <div class="render-desc-area">
+          <div class="render-desc-title">Render Description</div>
+          <div class="render-desc-text" id="renderDescText"></div>
+        </div>
+      </div>
+      <div class="loader-overlay" id="loaderOverlay">
+        <div class="loader-text" id="loaderText">INITIALIZING RENDERER...</div>
+        <div class="loader-bar"><div class="loader-fill" id="loaderFill"></div></div>
+      </div>
+    </div>
+
+    <div class="spec-bar" id="specBar" style="display:none">
+      <div class="spec-card"><div class="spec-name">Vehicle</div><div class="spec-val" id="specVehicle">—</div></div>
+      <div class="spec-card"><div class="spec-name">Color</div><div class="spec-val accent" id="specColor">—</div></div>
+      <div class="spec-card"><div class="spec-name">Style</div><div class="spec-val" id="specStyle">—</div></div>
+      <div class="spec-card"><div class="spec-name">Mods</div><div class="spec-val" id="specMods">—</div></div>
+    </div>
+
+    <div class="history-row" id="historyRow" style="display:none">
+      <h3>Render History</h3>
+      <div class="history-thumbs" id="historyThumbs"></div>
+    </div>
+  </main>
+</div>
+
+<div class="modal-bg" id="apiModal">
+  <div class="modal">
+    <h2>API Key</h2>
+    <p>Enter your Anthropic API key. It's stored only in your browser session (sessionStorage) and never sent anywhere except the Anthropic API.</p>
+    <input type="password" id="apiKeyInput" placeholder="sk-ant-...">
+    <button class="gen-btn primary" id="saveKeyBtn" style="font-size:16px;letter-spacing:2px;padding:12px">SAVE KEY</button>
+    <div class="note">Get your key at <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a>. This app uses Claude to generate detailed render prompts, then Pollinations AI for image generation.</div>
+  </div>
+</div>
+
+<script>
+let apiKey = sessionStorage.getItem('af_key') || '';
+let selectedColor = 'Midnight Black';
+let selectedStyle = 'Stock';
+let selectedAngle = 'front 3/4';
+let uploadedImageB64 = null;
+let modTags = [];
+let renderHistory = [];
+let isGenerating = false;
+
+const LOADERS = [
+  'ANALYZING VEHICLE DATA...',
+  'BUILDING RENDER PROMPT...',
+  'CALLING AI ENGINE...',
+  'RENDERING YOUR BUILD...',
+  'APPLYING MODIFICATIONS...',
+  'FINAL POLISH...'
+];
+
+// API KEY MODAL
+const apiModal = document.getElementById('apiModal');
+document.getElementById('apiKeyBtn').onclick = () => {
+  document.getElementById('apiKeyInput').value = apiKey;
+  apiModal.classList.add('show');
+};
+document.getElementById('saveKeyBtn').onclick = () => {
+  const v = document.getElementById('apiKeyInput').value.trim();
+  if (v) { apiKey = v; sessionStorage.setItem('af_key', v); }
+  apiModal.classList.remove('show');
+};
+apiModal.onclick = e => { if (e.target === apiModal) apiModal.classList.remove('show'); };
+if (!apiKey) setTimeout(() => apiModal.classList.add('show'), 400);
+
+// SWATCHES
+document.getElementById('swatches').querySelectorAll('.swatch').forEach(s => {
+  s.onclick = () => {
+    document.querySelectorAll('.swatch').forEach(x => x.classList.remove('active'));
+    s.classList.add('active');
+    selectedColor = s.dataset.color;
+    document.getElementById('colorLabel').textContent = selectedColor;
+  };
+});
+document.getElementById('customColor').addEventListener('input', e => {
+  document.querySelectorAll('.swatch').forEach(x => x.classList.remove('active'));
+  selectedColor = 'Custom ' + e.target.value.toUpperCase();
+  document.getElementById('colorLabel').textContent = selectedColor;
+});
+
+// STYLE CHIPS
+document.getElementById('styleChips').querySelectorAll('.chip').forEach(c => {
+  c.onclick = () => {
+    document.querySelectorAll('#styleChips .chip').forEach(x => x.classList.remove('active'));
+    c.classList.add('active');
+    selectedStyle = c.dataset.style;
+  };
+});
+
+// ANGLE CHIPS
+document.getElementById('angleChips').querySelectorAll('.chip').forEach(c => {
+  c.onclick = () => {
+    document.querySelectorAll('#angleChips .chip').forEach(x => x.classList.remove('active'));
+    c.classList.add('active');
+    selectedAngle = c.dataset.angle;
+  };
+});
+
+// MOD TAGS
+function renderTags() {
+  const cont = document.getElementById('modTags');
+  cont.innerHTML = '';
+  modTags.forEach((t, i) => {
+    const el = document.createElement('div');
+    el.className = 'tag';
+    el.innerHTML = t + ' <span class="rm" data-i="' + i + '">x</span>';
+    cont.appendChild(el);
+  });
+  cont.querySelectorAll('.rm').forEach(r => {
+    r.onclick = () => { modTags.splice(+r.dataset.i, 1); renderTags(); };
+  });
+}
+
+document.getElementById('addTagBtn').onclick = addTag;
+document.getElementById('tagInput').onkeydown = e => { if (e.key === 'Enter') addTag(); };
+function addTag() {
+  const v = document.getElementById('tagInput').value.trim();
+  if (v && !modTags.includes(v)) { modTags.push(v); renderTags(); }
+  document.getElementById('tagInput').value = '';
+}
+
+// PRESET TAGS
+const presetRow = document.getElementById('presetTagsRow');
+['Lowered','Air Ride','Wide Body','Carbon Hood','Blacked Out Trim','Flush Fitment','Roll Cage','Diffuser'].forEach(t => {
+  const el = document.createElement('div');
+  el.className = 'tag';
+  el.style.cssText = 'cursor:pointer;opacity:.6;transition:opacity .15s;border-style:dashed';
+  el.textContent = '+ ' + t;
+  el.onclick = () => { if (!modTags.includes(t)) { modTags.push(t); renderTags(); } };
+  el.onmouseenter = () => el.style.opacity = '1';
+  el.onmouseleave = () => el.style.opacity = '.6';
+  presetRow.appendChild(el);
+});
+
+// FILE UPLOAD
+const uz = document.getElementById('uploadZone');
+const fi = document.getElementById('fileInput');
+uz.addEventListener('dragover', e => { e.preventDefault(); uz.classList.add('dragover'); });
+uz.addEventListener('dragleave', () => uz.classList.remove('dragover'));
+uz.addEventListener('drop', e => { e.preventDefault(); uz.classList.remove('dragover'); if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]); });
+fi.onchange = () => { if (fi.files[0]) handleFile(fi.files[0]); };
+
+function handleFile(file) {
+  const reader = new FileReader();
+  reader.onload = e => {
+    uploadedImageB64 = e.target.result.split(',')[1];
+    const thumb = document.getElementById('previewThumb');
+    thumb.src = e.target.result;
+    thumb.style.display = 'block';
+  };
+  reader.readAsDataURL(file);
+}
+
+// GENERATE
+document.getElementById('genBtn').onclick = generate;
+
+async function generate() {
+  if (isGenerating) return;
+  const vin = document.getElementById('vinInput').value.trim();
+  if (!vin) { document.getElementById('vinError').classList.add('show'); return; }
+  document.getElementById('vinError').classList.remove('show');
+  if (!apiKey) { apiModal.classList.add('show'); return; }
+
+  isGenerating = true;
+  const btn = document.getElementById('genBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spin">o</span> GENERATING...';
+  btn.classList.remove('primary');
+  btn.classList.add('loading');
+
+  const overlay = document.getElementById('loaderOverlay');
+  const fillEl = document.getElementById('loaderFill');
+  const txtEl = document.getElementById('loaderText');
+  overlay.classList.add('show');
+
+  let pct = 0;
+  let li = 0;
+  const ticker = setInterval(() => {
+    pct = Math.min(pct + Math.random() * 8 + 3, 88);
+    fillEl.style.width = pct + '%';
+    if (Math.random() > .6 && li < LOADERS.length - 1) { li++; txtEl.textContent = LOADERS[li]; }
+  }, 400);
+
+  try {
+    const modDesc = document.getElementById('modDesc').value.trim();
+    const allMods = [...modTags];
+    if (modDesc) allMods.push(modDesc);
+    const modsStr = allMods.length ? allMods.join(', ') : 'stock / no modifications';
+
+    const promptReqMessages = [{
+      role: 'user',
+      content: uploadedImageB64 ? [
+        { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: uploadedImageB64 } },
+        { type: 'text', text: buildPromptRequest(vin, modsStr) }
+      ] : [
+        { type: 'text', text: buildPromptRequest(vin, modsStr) }
+      ]
+    }];
+
+    const r1 = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1200,
+        messages: promptReqMessages,
+        system: `You are an expert automotive visualization AI. The user will describe a car and modifications. 
+Return ONLY a JSON object with exactly two fields:
+1. "imagePrompt": a detailed, vivid ~120-word prompt for generating a photorealistic car render (suitable for DALL-E or Stable Diffusion). Be specific about reflections, lighting (studio or dramatic outdoor), materials, wheels, bodywork.
+2. "description": a 2-3 sentence human-readable description of the build as if you are showing it to the customer.
+Return ONLY valid JSON, no markdown, no preamble.`
+      })
+    });
+
+    const d1 = await r1.json();
+    const raw = d1.content?.find(c => c.type === 'text')?.text || '{}';
+    let parsed = {};
+    try { parsed = JSON.parse(raw.replace(/```json|```/g, '')); } catch (e) {}
+
+    const imagePrompt = parsed.imagePrompt || ('Photorealistic render of a ' + vin + ', ' + selectedColor + ' paint, ' + selectedStyle + ' build style, ' + modsStr + ', ' + selectedAngle + ' view, studio lighting.');
+    const description = parsed.description || ('A custom ' + vin + ' rendered in ' + selectedColor + ' with a ' + selectedStyle + ' build.');
+
+    fillEl.style.width = '70%';
+    txtEl.textContent = 'GENERATING IMAGE...';
+
+    const encoded = encodeURIComponent(imagePrompt.slice(0, 400) + ', photorealistic, automotive photography, 8k');
+    const seed = Math.floor(Math.random() * 99999);
+    const imgUrl = 'https://image.pollinations.ai/prompt/' + encoded + '?width=896&height=504&seed=' + seed + '&nologo=true&model=flux';
+
+    await new Promise((res, rej) => {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = res;
+      img.onerror = rej;
+      img.src = imgUrl;
+    });
+
+    fillEl.style.width = '100%';
+    clearInterval(ticker);
+    await new Promise(r => setTimeout(r, 300));
+
+    document.getElementById('renderImg').src = imgUrl;
+    document.getElementById('renderDescText').textContent = description;
+    document.getElementById('renderPlaceholder').style.display = 'none';
+    document.getElementById('renderOutput').style.display = 'block';
+    overlay.classList.remove('show');
+
+    document.getElementById('specBar').style.display = 'grid';
+    document.getElementById('specVehicle').textContent = vin.length > 20 ? vin.slice(0, 18) + '...' : vin;
+    document.getElementById('specColor').textContent = selectedColor;
+    document.getElementById('specStyle').textContent = selectedStyle;
+    document.getElementById('specMods').textContent = modTags.length + (modDesc ? '+' : '') + ' mod' + (modTags.length !== 1 ? 's' : '');
+
+    renderHistory.unshift({ src: imgUrl, desc: description });
+    if (renderHistory.length > 6) renderHistory.pop();
+    renderHistoryUI();
+
+  } catch (err) {
+    clearInterval(ticker);
+    overlay.classList.remove('show');
+    document.getElementById('renderDescText').textContent = 'Error: ' + err.message + '. Check your API key and try again.';
+    document.getElementById('renderPlaceholder').style.display = 'none';
+    document.getElementById('renderOutput').style.display = 'block';
+  }
+
+  isGenerating = false;
+  btn.disabled = false;
+  btn.innerHTML = 'REGENERATE';
+  btn.classList.add('primary');
+  btn.classList.remove('loading');
+}
+
+function buildPromptRequest(vin, mods) {
+  return 'Vehicle: ' + vin + '\nPaint color: ' + selectedColor + '\nBuild style: ' + selectedStyle + '\nRender angle: ' + selectedAngle + ' view\nModifications: ' + mods + (uploadedImageB64 ? '\nA reference image is attached - use it for inspiration on the modifications/style.' : '') + '\n\nPlease write a detailed photorealistic image generation prompt and a customer-facing description.';
+}
+
+function renderHistoryUI() {
+  const row = document.getElementById('historyRow');
+  const cont = document.getElementById('historyThumbs');
+  if (renderHistory.length === 0) { row.style.display = 'none'; return; }
+  row.style.display = 'block';
+  cont.innerHTML = '';
+  renderHistory.forEach((h, i) => {
+    const el = document.createElement('div');
+    el.className = 'hist-thumb' + (i === 0 ? ' active-hist' : '');
+    el.innerHTML = '<img src="' + h.src + '" alt="render ' + (i + 1) + '"><div class="hist-num">#' + (renderHistory.length - i) + '</div>';
+    el.onclick = () => {
+      document.getElementById('renderImg').src = h.src;
+      document.getElementById('renderDescText').textContent = h.desc;
+      cont.querySelectorAll('.hist-thumb').forEach(x => x.classList.remove('active-hist'));
+      el.classList.add('active-hist');
+    };
+    cont.appendChild(el);
+  });
+}
+</script>
+</body>
+</html>
